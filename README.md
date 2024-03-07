@@ -20,3 +20,68 @@ except Exception as e:
 # 最後，提示文件已經打開並等待用戶輸入以退出程序
 input("1025個文件已經打開，按 Enter 以退出程序...")
 ```
+
+```python
+import os
+import sys
+import yaml
+import csv
+
+def read_yaml_files(folder_path):
+    nodes_list = []
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.yaml'):
+            file_path = os.path.join(folder_path, filename)
+            with open(file_path, 'r') as file:
+                yaml_data = yaml.safe_load(file)
+                if 'nodes' in yaml_data:
+                    nodes_list.extend(yaml_data['nodes'])
+    return nodes_list
+
+def filter_nodes(nodes_list, keywords):
+    filtered_nodes = []
+    for node in nodes_list:
+        for keyword in keywords:
+            if keyword in node:
+                filtered_nodes.append(node)
+                break  # Break the inner loop if one keyword matches
+    return filtered_nodes
+
+def output_to_list(nodes_list):
+    for node in nodes_list:
+        print(node)
+
+def output_to_csv(nodes_list, output_file):
+    with open(output_file, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for node in nodes_list:
+            writer.writerow([node])
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <keyword1> <keyword2> ...")
+        sys.exit(1)
+
+    keywords = sys.argv[1:]
+    folder_path = "/your/folder/path"  # Folder path predefined as a fixed value, you can modify it to your folder path
+
+    nodes_list = read_yaml_files(folder_path)
+
+    if not nodes_list:
+        print("No YAML files found or no 'nodes' in the files.")
+    else:
+        filtered_nodes = filter_nodes(nodes_list, keywords)
+
+        if not filtered_nodes:
+            print("No items matching the criteria.")
+        else:
+            output_format = input("Select output format (list/csv): ")
+            if output_format.lower() == 'list':
+                output_to_list(filtered_nodes)
+            elif output_format.lower() == 'csv':
+                output_file = input("Enter the path and name of the CSV file: ")
+                output_to_csv(filtered_nodes, output_file)
+            else:
+                print("Invalid output format.")
+
+```
