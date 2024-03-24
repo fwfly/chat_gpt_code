@@ -1,3 +1,6 @@
+https://www.brendangregg.com/blog/2024-03-24/linux-crisis-tools.html?fbclid=IwAR2CBV7dPdD0cWxn6dYjjx7Hma_cC6_dzcNeeqd8thZxtFr-vjNxlLKyZDQ
+
+
 # chat_gpt_code
 
 ```python
