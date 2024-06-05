@@ -3,6 +3,36 @@ https://www.brendangregg.com/blog/2024-03-24/linux-crisis-tools.html?fbclid=IwAR
 
 # chat_gpt_code
 
+輸出 yaml template
+```bash
+#!/bin/bash
+
+# 定義輸入的專案名稱列表
+projects="p1 p2 p3 p4"
+
+# 定義輸出的 YAML 文件名稱
+output_file="projects.yaml"
+
+# 清空或創建輸出文件
+> $output_file
+
+# 定義 YAML 模板
+template() {
+  cat <<EOF
+test-$1:
+   name: $1
+   domiain: xxxx
+EOF
+}
+
+# 迭代每個專案名稱並生成對應的 YAML 配置
+for project in $projects; do
+  template $project >> $output_file
+done
+
+echo "YAML file generated: $output_file"
+```
+
 ```python
 # 引入所需的模組
 import os
