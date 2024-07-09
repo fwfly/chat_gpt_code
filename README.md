@@ -134,6 +134,22 @@ def read_ssh_config(hostname):
     return ssh_config.lookup(hostname)
 
 def ssh_command_with_config(hostname, command):
+
+    logger = logging.getLogger("paramiko")
+    logger.setLevel(logging.DEBUG)
+
+    # 创建控制台处理程序并将其级别设置为DEBUG
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    # 创建格式化程序并将其添加到处理程序中
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+
+    # 将处理程序添加到logger中
+    logger.addHandler(ch)
+
+
     config = read_ssh_config(hostname)
     user = config.get('user')
     hostname = config.get('hostname')
