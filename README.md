@@ -118,3 +118,88 @@ if __name__ == "__main__":
                 print("Invalid output format.")
 
 ```
+
+## ssh python paramiko
+
+paramiko code
+```
+import paramiko
+import os
+
+def read_ssh_config(hostname):
+    ssh_config = paramiko.SSHConfig()
+    config_file = os.path.expanduser("~/.ssh/config")
+    with open(config_file) as f:
+        ssh_config.parse(f)
+    return ssh_config.lookup(hostname)
+
+def ssh_command_with_config(hostname, command):
+    config = read_ssh_config(hostname)
+    user = config.get('user')
+    hostname = config.get('hostname')
+    port = int(config.get('port', 22))
+    key_filename = config.get('identityfile', [None])[0]
+
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        client.connect(hostname, port=port, username=user, key_filename=key_filename)
+
+        stdin, stdout, stderr = client.exec_command(command)
+
+        output = stdout.read().decode()
+        error = stderr.read().decode()
+
+        return output, error
+
+    finally:
+        client.close()
+
+if __name__ == "__main__":
+    hostname = 'your_alias_from_ssh_config'
+    command = 'uptime'
+
+    output, error = ssh_command_with_config(hostname, command)
+
+    print("Output:\n", output)
+    print("Error:\n", error)
+
+```
+
+subprocess.Popen
+```
+import subprocess
+
+def ssh_commands(hostname, username, commands):
+    # 將多個命令連接成一個命令字符串
+    command_string = " && ".join(commands)
+    ssh_command = f"ssh {username}@{hostname} '{command_string}'"
+    
+    # 使用 subprocess.Popen 執行 SSH 命令
+    process = subprocess.Popen(
+        ssh_command, shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+    # 讀取標準輸出和標準錯誤
+    stdout, stderr = process.communicate()
+    
+    return stdout.decode(), stderr.decode()
+
+if __name__ == "__main__":
+    hostname = 'your_server_ip'
+    username = 'your_username'
+    commands = [
+        'sudo apt update',
+        'sudo apt upgrade -y',
+        'sudo apt autoremove -y'
+    ]
+
+    output, error = ssh_commands(hostname, username, commands)
+
+    print("Output:\n", output)
+    print("Error:\n", error)
+```
