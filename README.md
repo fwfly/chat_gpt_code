@@ -219,3 +219,15 @@ if __name__ == "__main__":
     print("Output:\n", output)
     print("Error:\n", error)
 ```
+
+```make
+OS := $(shell uname)
+
+all:
+ifeq ($(OS), Darwin)
+	@echo "This is mac"
+else
+	@echo "Not mac"
+endif
+
+```
