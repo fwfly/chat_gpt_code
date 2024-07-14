@@ -1,4 +1,19 @@
 import pynetbox
+import csv
+
+# 讀取 CSV 檔案
+csv_file_path = 'your_file.csv'
+
+with open(csv_file_path, newline='', encoding='utf-8') as csvfile:
+    csvreader = csv.DictReader(csvfile)
+    
+    # 將每一行轉換為字典並存入列表中
+    data = [row for row in csvreader]
+
+# 顯示資料
+for item in data:
+    print(item)
+
 
 class RackManager:
     def __init__(self, netbox_url, token):
