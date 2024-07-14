@@ -1,70 +1,80 @@
 import pynetbox
 
-class NetBoxManager:
-    def __init__(self, api_url, token):
-        self.nb = pynetbox.api(api_url, token=token)
+class RackManager:
+    def __init__(self, netbox_url, token):
+        self.nb = pynetbox.api(netbox_url, token=token)
+
+    def get_or_create_rack(self, rack_name):
+        racks = self.nb.dcim.racks.filter(name=rack_name)
+        if racks:
+            return racks[0].id
+        else:
+            new_rack = self.nb.dcim.racks.create(name=rack_name)
+            return new_rack.id
+
+    def get_or_create_device_role(self, role_name):
+        roles = self.nb.dcim.device_roles.filter(name=role_name)
+        if roles:
+            return roles[0].id
+        else:
+            new_role = self.nb.dcim.device_roles.create(name=role_name, slug=role_name.lower().replace(" ", "-"))
+            return new_role.id
+
+    def get_or_create_device_type(self, device_type, manufacturer_name):
+        manufacturers = self.nb.dcim.manufacturers.filter(name=manufacturer_name)
+        if manufacturers:
+            manufacturer_id = manufacturers[0].id
+        else:
+            new_manufacturer = self.nb.dcim.manufacturers.create(name=manufacturer_name, slug=manufacturer_name.lower().replace(" ", "-"))
+            manufacturer_id = new_manufacturer.id
+
+        device_types = self.nb.dcim.device_types.filter(model=device_type, manufacturer_id=manufacturer_id)
+        if device_types:
+            return device_types[0].id
+        else:
+            new_device_type = self.nb.dcim.device_types.create(model=device_type, manufacturer=manufacturer_id, slug=device_type.lower().replace(" ", "-"))
+            return new_device_type.id
+
+    def add_or_replace_device(self, rack_name, device_name, position, device_type, site_name, device_role, manufacturer_name):
+        rack_id = self.get_or_create_rack(rack_name)
         
-    def list_racks(self):
-        """Lists all racks"""
-        try:
-            return self.nb.dcim.racks.all()
-        except Exception as e:
-            print(f"An error occurred while listing racks: {e}")
-            return []
+        sites = self.nb.dcim.sites.filter(name=site_name)
+        if not sites:
+            new_site = self.nb.dcim.sites.create(name=site_name, slug=site_name.lower().replace(" ", "-"))
+            site_id = new_site.id
+        else:
+            site_id = sites[0].id
 
-    def list_device_roles(self):
-        """Lists all device roles"""
-        try:
-            return self.nb.dcim.device_roles.all()
-        except Exception as e:
-            print(f"An error occurred while listing device roles: {e}")
-            return []
+        device_type_id = self.get_or_create_device_type(device_type, manufacturer_name)
+        device_role_id = self.get_or_create_device_role(device_role)
 
-    def list_devices(self):
-        """Lists all devices"""
-        try:
-            return self.nb.dcim.devices.all()
-        except Exception as e:
-            print(f"An error occurred while listing devices: {e}")
-            return []
+        devices_in_rack = self.nb.dcim.devices.filter(rack_id=rack_id, position=position)
+        if devices_in_rack:
+            devices_in_rack[0].delete()
 
-    def add_device(self, name, device_role, device_type, site, rack=None):
-        """Adds a new device"""
-        try:
-            device_data = {
-                "name": name,
-                "device_role": device_role,
-                "device_type": device_type,
-                "site": site,
-            }
-            if rack:
-                device_data["rack"] = rack
-            
-            return self.nb.dcim.devices.create(device_data)
-        except Exception as e:
-            print(f"An error occurred while adding the device: {e}")
-            return None
+        new_device = self.nb.dcim.devices.create(
+            name=device_name,
+            device_type=device_type_id,
+            rack=rack_id,
+            position=position,
+            site=site_id,
+            device_role=device_role_id
+        )
+        return new_device.id
 
-# Usage example:
+# 使用示例
 if __name__ == "__main__":
-    api_url = "http://your-netbox-instance/api/"
+    netbox_url = "http://your-netbox-instance.com"
     token = "your-api-token"
-
-    nb_manager = NetBoxManager(api_url, token)
     
-    racks = nb_manager.list_racks()
-    print("Racks:", racks)
-    
-    device_roles = nb_manager.list_device_roles()
-    print("Device Roles:", device_roles)
-    
-    devices = nb_manager.list_devices()
-    print("Devices:", devices)
-    
-    new_device = nb_manager.add_device(
-        name="New Device",
-        device_role=1,  # Assuming 1 is the ID of the device role
-        device_type=1,  # Assuming 1 is the ID of the device type
-        site=1          # Assuming 1 is the ID of the site
+    rack_manager = RackManager(netbox_url, token)
+    device_id = rack_manager.add_or_replace_device(
+        rack_name="my-rack",
+        device_name="my-device",
+        position=1,
+        device_type="device-model",
+        site_name="my-site",
+        device_role="server",
+        manufacturer_name="my-manufacturer"
     )
-    print("New Device:", new_device)
+    print(f"Device ID: {device_id}")
