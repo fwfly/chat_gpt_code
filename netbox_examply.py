@@ -4,6 +4,14 @@ class RackManager:
     def __init__(self, netbox_url, token):
         self.nb = pynetbox.api(netbox_url, token=token)
 
+    def get_or_create_site(self, site_name):
+        sites = self.nb.dcim.sites.filter(name=site_name)
+        if sites:
+            return sites[0].id
+        else:
+            new_site = self.nb.dcim.sites.create(name=site_name, slug=site_name.lower().replace(" ", "-"))
+            return new_site.id
+    
     def get_or_create_rack(self, rack_name):
         racks = self.nb.dcim.racks.filter(name=rack_name)
         if racks:
@@ -36,6 +44,8 @@ class RackManager:
             return new_device_type.id
 
     def add_or_replace_device(self, rack_name, device_name, position, device_type, site_name, device_role, manufacturer_name):
+
+        site_id = self.get_or_create_site(site_name)        
         rack_id = self.get_or_create_rack(rack_name)
         
         sites = self.nb.dcim.sites.filter(name=site_name)
