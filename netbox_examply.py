@@ -97,7 +97,56 @@ class RackManager:
             site=site_id,
             device_role=device_role_id
         )
-        return new_device.id
+
+
+            # Assign IP address to the new device's interface
+            self.assign_ip_to_device(new_device.id, interface_name, ip_address)
+            
+            return new_device
+        except Exception as e:
+            print(f"An error occurred while adding or replacing the device: {e}")
+            return None
+
+    def assign_ip_to_device(self, device_id, interface_name, ip_address):
+        """Assigns an IP address to a specified interface of a device, creates the interface if it doesn't exist"""
+        try:
+            # Get the device's interfaces
+            interfaces = self.nb.dcim.interfaces.filter(device_id=device_id, name=interface_name)
+            
+            if not interfaces:
+                # Create a new interface if it doesn't exist
+                interface = self.nb.dcim.interfaces.create({
+                    "device": device_id,
+                    "name": interface_name,
+                    "type": "1000base-t"  # You may want to customize the type based on your requirements
+                })
+                print(f"Created new interface {interface_name} for device ID {device_id}.")
+            else:
+                interface = interfaces[0]
+            
+            # Check if the IP address already exists
+            ip_addresses = self.nb.ipam.ip_addresses.filter(address=ip_address)
+            if ip_addresses:
+                ip = ip_addresses[0]
+            else:
+                # Create a new IP address
+                ip = self.nb.ipam.ip_addresses.create({
+                    "address": ip_address,
+                    "assigned_object_type": "dcim.interface",
+                    "assigned_object_id": interface.id
+                })
+            
+            # Assign the IP address to the interface
+            ip.assigned_object_id = interface.id
+            ip.assigned_object_type = "dcim.interface"
+            ip.save()
+            
+            print(f"Assigned IP address {ip_address} to interface {interface_name} of device ID {device_id}.")
+            return ip
+        except Exception as e:
+            print(f"An error occurred while assigning the IP address: {e}")
+            return None
+
 
 # 使用示例
 if __name__ == "__main__":
