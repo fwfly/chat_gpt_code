@@ -74,8 +74,20 @@ class RackManager:
         device_role_id = self.get_or_create_device_role(device_role)
 
         devices_in_rack = self.nb.dcim.devices.filter(rack_id=rack_id, position=position)
-        if devices_in_rack:
-            devices_in_rack[0].delete()
+        for device in existing_devices:
+            if device.serial == serial:
+                # Update existing device with new details
+                device.name = name
+                device.device_role = device_role
+                device.device_type = device_type
+                device.site = site
+                device.save()
+                print(f"Updated device with serial {serial} at position {position} in rack {rack}.")
+                return device
+            else:
+                # Delete existing device with different serial number
+                device.delete()
+                print(f"Deleted device with different serial {device.serial} at position {position} in rack {rack}.")
 
         new_device = self.nb.dcim.devices.create(
             name=device_name,
