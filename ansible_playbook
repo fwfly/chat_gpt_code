@@ -1,0 +1,34 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Load the main node file (node.yaml)
+      ansible.builtin.include_vars:
+        file: "./files/node.yaml"
+        name: node_data_all
+
+    - name: Iterate over all nodes in node.yaml
+      ansible.builtin.set_fact:
+        current_node: "{{ item.key }}"
+        current_node_data: "{{ item.value }}"
+      with_dict: "{{ node_data_all.all.nodes }}"
+
+    - name: Load the specific node file
+      ansible.builtin.include_vars:
+        file: "./files/nodes/{{ current_node }}.yaml"
+        name: node_specific_data
+      when: current_node_data is defined
+
+    - name: Flatten the current node's properties
+      ansible.builtin.set_fact:
+        flattened_node_data: "{{ current_node_data | dict2items }}"
+        flattened_specific_data: "{{ node_specific_data | dict2items }}"
+      when: node_specific_data is defined
+
+    - name: Compare each property in current node
+      ansible.builtin.debug:
+        msg: >
+          Node: {{ current_node }}
+          Property '{{ item.key }}' is
+          {{ 'matching' if flattened_specific_data | selectattr('key', 'equalto', item.key) | map(attribute='value') | first == item.value else 'not matching' }}
+      with_items: "{{ flattened_node_data }}"
+      when: flattened_specific_data is defined
