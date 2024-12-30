@@ -2,6 +2,23 @@ import subprocess
 import json
 import sys
 
+import re
+
+def parse_report_line_by_line(lines):
+    # 定義正則表達式來匹配目標行
+    pattern = r"(\d+):(\d+)\s+(\d+)\s+(\w+)"
+    result = []
+
+    # 遍歷每一行並匹配
+    for line in lines:
+        match = re.search(pattern, line)
+        if match:
+            eid, slt, _, state = match.groups()  # 提取所需欄位
+            result.append({"EID": eid, "Slt": slt, "State": state})
+    
+    return result
+
+
 def run_command(command):
     try:
         result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
