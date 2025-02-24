@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'BUILD_TYPE', choices: ['default', 'run-tool'], description: '请选择构建流程')
+    }
+    stages {
+        stage('Default Build') {
+            when {
+                expression { params.BUILD_TYPE == 'default' }
+            }
+            stages {
+                stage('Stage 1') {
+                    steps {
+                        echo '执行 Stage 1'
+                    }
+                }
+                stage('Stage 2') {
+                    steps {
+                        echo '执行 Stage 2'
+                    }
+                }
+                stage('Stage 3') {
+                    steps {
+                        echo '执行 Stage 3'
+                    }
+                }
+            }
+        }
+        stage('Execute Tool') {
+            when {
+                expression { params.BUILD_TYPE == 'run-tool' }
+            }
+            steps {
+                echo '执行 Execute Tool 阶段'
+            }
+        }
+    }
+}
