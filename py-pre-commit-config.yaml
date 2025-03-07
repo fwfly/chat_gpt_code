@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-yaml-hosts
+        name: Check YAML Hosts Key
+        entry: python check_yaml_hosts.py
+        language: system
+        files: \.ya?ml$pre-commit-config.yaml
