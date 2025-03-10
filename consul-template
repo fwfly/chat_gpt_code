@@ -1,0 +1,1 @@
+PASSWD="{{ with secret "secret/path/to/password" }}"{{ .Data.password | replaceAll `\` `\\` | replaceAll `"` `\"` | replaceAll `$` `\$` }}"{{ end }}"
